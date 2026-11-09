@@ -1,6 +1,6 @@
 // Service worker do Placar Pife e Uno: guarda o app no aparelho para abrir sem internet.
 // Ao mudar qualquer arquivo do app, aumente o número da versão abaixo.
-const VERSION = 'placar-v1';
+const VERSION = 'placar-v2';
 const SHELL = [
   './',
   'index.html',
