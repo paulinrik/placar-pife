@@ -1,0 +1,1216 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Placar de vitórias para dois jogadores: Pife, Uno e outros jogos, com estatísticas, filtro por período, comemoração e cartão para compartilhar. Visual de giz de cera pastel.">
+<meta name="theme-color" content="#A9DFF2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1C2A40" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Placar">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+:root { padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<title>Placar Pife e Uno</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chewy&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Layout: cena de colinas e nuvens no topo, seletor de jogos, abas Placar / Estatísticas / Histórico, filtro de período.
+     Estilo: papel cru com giz de cera pastel, contornos marrons grossos de traço irregular, ovos manchados no lugar do número.
+     Movimento: sempre em poucos quadros (steps), como animação feita a giz de cera. */
+  --bg: #CFEEF7; --dot: rgba(255,255,255,.75);
+  --surface: #FFF8DC; --surface2: #F4EAC0; --fg: #4A3220; --muted: #6F573D; --line: #DCCB9E;
+  --a: #8FD14F; --a-soft: #DDF3BE; --a-ink: #3F7A1E;
+  --b: #FF9DB5; --b-soft: #FFDDE6; --b-ink: #C23A5E;
+  --sun: #FFE066; --egg: #FFFDF0; --on-pc: #3A2814; --danger: #B42318; --shadow: rgba(74,50,32,.28);
+  --c-red: #FF8F8F; --c-yellow: #FFE066; --c-green: #8FD14F; --c-blue: #6EB6F2;
+  --title-fill: #FFFDF0; --title-edge: #4A3220;
+  --hill: #8FD14F; --hill2: #B7E37A; --cloud: #FFFFFF; --scene-sky: #A9DFF2;
+  --wob: 16px 20px 14px 22px / 20px 14px 22px 16px;
+  --font-display: 'Chewy', 'Comic Sans MS', 'Trebuchet MS', system-ui, sans-serif;
+  --font-body: 'Fredoka', 'Trebuchet MS', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sym: system-ui, 'Segoe UI Symbol', 'Apple Symbols', 'Noto Sans Symbols 2', sans-serif;
+}
+:root[data-game="uno"], :root[data-pal="2"] {
+  --a: #6EB6F2; --a-soft: #D6EAFB; --a-ink: #1F5FA8;
+  --b: #FF8F8F; --b-soft: #FFDAD6; --b-ink: #C23A3A;
+}
+:root[data-pal="3"] {
+  --a: #FFB35C; --a-soft: #FFE5C2; --a-ink: #A8560A;
+  --b: #B79CFF; --b-soft: #E8DEFF; --b-ink: #6B45C9;
+}
+:root[data-pal="4"] {
+  --a: #5FD6C9; --a-soft: #CDF4EF; --a-ink: #12766C;
+  --b: #FFE066; --b-soft: #FFF3BF; --b-ink: #8A6A00;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1C2A40; --dot: rgba(255,255,255,.07);
+    --surface: #2B3C57; --surface2: #364C6E; --fg: #F6EBCB; --muted: #BAC6D9; --line: #4A6286;
+    --a: #9AD95A; --a-soft: #2D4A2B; --a-ink: #A8E070;
+    --b: #FF9DB5; --b-soft: #5A2E41; --b-ink: #FFA9BF;
+    --sun: #FFD84D; --egg: #FFF6D6; --danger: #FF8A80; --shadow: rgba(0,0,0,.4);
+    --title-edge: #0E1828; --hill: #5E9E3A; --hill2: #4A8530; --cloud: #C9D6EA; --scene-sky: #2D4466;
+    color-scheme: dark;
+  }
+  :root:not([data-theme="light"])[data-game="uno"], :root:not([data-theme="light"])[data-pal="2"] {
+    --a: #7CBFF5; --a-soft: #1F3F66; --a-ink: #8EC8F8;
+    --b: #FF9A9A; --b-soft: #5A2A2D; --b-ink: #FFA3A3;
+  }
+  :root:not([data-theme="light"])[data-pal="3"] {
+    --a: #FFC074; --a-soft: #5A3A18; --a-ink: #FFCB8C;
+    --b: #C7B0FF; --b-soft: #3F3466; --b-ink: #D2BFFF;
+  }
+  :root:not([data-theme="light"])[data-pal="4"] {
+    --a: #6FE0D4; --a-soft: #1D4A46; --a-ink: #8CE9DF;
+    --b: #FFD84D; --b-soft: #54481A; --b-ink: #FFE57A;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1C2A40; --dot: rgba(255,255,255,.07);
+  --surface: #2B3C57; --surface2: #364C6E; --fg: #F6EBCB; --muted: #BAC6D9; --line: #4A6286;
+  --a: #9AD95A; --a-soft: #2D4A2B; --a-ink: #A8E070;
+  --b: #FF9DB5; --b-soft: #5A2E41; --b-ink: #FFA9BF;
+  --sun: #FFD84D; --egg: #FFF6D6; --danger: #FF8A80; --shadow: rgba(0,0,0,.4);
+  --title-edge: #0E1828; --hill: #5E9E3A; --hill2: #4A8530; --cloud: #C9D6EA; --scene-sky: #2D4466;
+  color-scheme: dark;
+}
+:root[data-theme="dark"][data-game="uno"], :root[data-theme="dark"][data-pal="2"] {
+  --a: #7CBFF5; --a-soft: #1F3F66; --a-ink: #8EC8F8;
+  --b: #FF9A9A; --b-soft: #5A2A2D; --b-ink: #FFA3A3;
+}
+:root[data-theme="dark"][data-pal="3"] {
+  --a: #FFC074; --a-soft: #5A3A18; --a-ink: #FFCB8C;
+  --b: #C7B0FF; --b-soft: #3F3466; --b-ink: #D2BFFF;
+}
+:root[data-theme="dark"][data-pal="4"] {
+  --a: #6FE0D4; --a-soft: #1D4A46; --a-ink: #8CE9DF;
+  --b: #FFD84D; --b-soft: #54481A; --b-ink: #FFE57A;
+}
+* { box-sizing: border-box; }
+body {
+  background-color: var(--bg);
+  background-image: radial-gradient(circle, var(--dot) 3px, transparent 3.5px);
+  background-size: 34px 34px;
+  color: var(--fg);
+  font: 500 16px/1.45 var(--font-body);
+  padding-block: 18px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+h1 {
+  font: 400 34px/1 var(--font-display); margin: 0; letter-spacing: .01em; text-wrap: balance; color: var(--title-fill);
+  text-shadow: 2px 0 var(--title-edge), -2px 0 var(--title-edge), 0 2px var(--title-edge), 0 -2px var(--title-edge),
+    1.5px 1.5px var(--title-edge), -1.5px 1.5px var(--title-edge), 1.5px -1.5px var(--title-edge), -1.5px -1.5px var(--title-edge),
+    0 5px 0 var(--title-edge);
+  padding-bottom: 4px; min-width: 0; overflow-wrap: anywhere;
+}
+h2 { font: 400 22px/1.2 var(--font-display); margin: 0; text-wrap: balance; }
+.pa { --pc: var(--a); --pc-soft: var(--a-soft); --pc-ink: var(--a-ink); }
+.pb { --pc: var(--b); --pc-soft: var(--b-soft); --pc-ink: var(--b-ink); }
+.muted { color: var(--muted); }
+.small { font-size: 13.5px; }
+.l { display: block; font-size: 13.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--pc); border: 2px solid var(--fg); margin-right: 6px; vertical-align: -1px; }
+
+button { font-family: inherit; }
+.btn {
+  min-height: 46px; padding: 0 18px; border-radius: var(--wob); border: 3px solid var(--fg);
+  background: var(--surface); color: var(--fg); font: 600 15px var(--font-body); cursor: pointer;
+  box-shadow: 0 4px 0 var(--shadow);
+}
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--shadow); }
+.btn.small { min-height: 38px; padding: 0 12px; font-size: 13px; }
+.btn.danger { color: var(--danger); }
+.btn.go { background: var(--sun); color: var(--on-pc); }
+:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+
+.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.fan { display: flex; flex: none; padding: 6px 6px 0 14px; }
+.fan i {
+  width: 30px; height: 42px; border-radius: 7px; margin-left: -10px; display: flex; align-items: center; justify-content: center;
+  font: 700 17px var(--font-sym); font-style: normal; border: 2.5px solid var(--fg); transform-origin: 50% 100%; color: var(--on-pc);
+}
+.fan i:nth-child(1) { transform: rotate(-13deg); }
+.fan i:nth-child(2) { transform: rotate(-4deg); }
+.fan i:nth-child(3) { transform: rotate(5deg); }
+.fan i:nth-child(4) { transform: rotate(14deg); }
+.fan i.w { background: var(--egg); }
+.fan i.w.r { color: #C0394D; }
+.fan i.blue { background: var(--c-blue); }
+.fan i.red { background: var(--c-red); }
+.fan i.yellow { background: var(--c-yellow); }
+.fan i.green { background: var(--c-green); }
+.fan i.ca { background: var(--a); }
+.fan i.cb { background: var(--b); }
+
+.scene { border: 3px solid var(--fg); border-radius: var(--wob); overflow: hidden; background: var(--scene-sky); height: 78px; box-shadow: 0 4px 0 var(--shadow); }
+.scene svg { width: 100%; height: 100%; display: block; }
+.s-cloud { fill: var(--cloud); }
+.s-hill { fill: var(--hill); stroke: var(--fg); stroke-width: 2.5; }
+.s-hill2 { fill: var(--hill2); stroke: var(--fg); stroke-width: 2.5; }
+.s-sun { fill: var(--sun); stroke: var(--fg); stroke-width: 2.5; }
+.s-petal { fill: var(--b); stroke: var(--fg); stroke-width: 1.5; }
+.s-petal2 { fill: var(--egg); stroke: var(--fg); stroke-width: 1.5; }
+.s-core { fill: var(--sun); stroke: var(--fg); stroke-width: 1.5; }
+.s-stem { stroke: var(--fg); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+
+.games { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 8px; }
+.games button {
+  min-height: 54px; min-width: 0; padding: 0 8px; border-radius: var(--wob); border: 3px solid var(--fg); background: var(--surface2); color: var(--fg);
+  font: 400 19px var(--font-display); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 0 var(--shadow);
+}
+.games button[aria-pressed="true"] { background: var(--sun); color: var(--on-pc); transform: translateY(2px); box-shadow: 0 2px 0 var(--shadow); }
+.games button.add { border-style: dashed; background: transparent; box-shadow: none; }
+.games button.add[aria-pressed="true"] { border-style: solid; background: var(--sun); box-shadow: 0 2px 0 var(--shadow); }
+.gt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gl { flex: none; }
+.gl.suits { font: 700 16px var(--font-sym); letter-spacing: 1px; }
+.gl.blocks { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; width: 18px; height: 18px; }
+.gl.blocks i { border-radius: 3px; display: block; border: 1.5px solid var(--fg); }
+.gl.blocks i:nth-child(1) { background: var(--c-red); }
+.gl.blocks i:nth-child(2) { background: var(--c-yellow); }
+.gl.blocks i:nth-child(3) { background: var(--c-blue); }
+.gl.blocks i:nth-child(4) { background: var(--c-green); }
+.gl.sum { font: 400 22px/1 var(--font-display); }
+
+.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: var(--surface2); padding: 6px; border-radius: var(--wob); border: 3px solid var(--fg); }
+.tabs button { min-height: 40px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); font: 600 14.5px var(--font-body); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 0 0 2.5px var(--fg); }
+
+.period { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.period .l { margin: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip {
+  min-height: 40px; padding: 0 14px; border-radius: 999px; border: 2.5px solid var(--fg); background: var(--surface); color: var(--fg);
+  font: 600 14px var(--font-body); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+}
+.chip[aria-pressed="true"] { background: var(--sun); color: var(--on-pc); }
+.chip .sym { font: 700 16px var(--font-sym); }
+.chip.pal i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--fg); display: inline-block; }
+
+section { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+#board { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding-top: 8px; }
+.player { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.face {
+  position: relative; border-radius: var(--wob); padding: 12px 8px 10px; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;
+  background: var(--surface); border: 3px solid var(--fg); color: var(--fg); box-shadow: 0 5px 0 var(--shadow);
+}
+.player.lead .face::after {
+  content: "★"; position: absolute; top: -19px; left: 50%; transform: translateX(-50%); font: 28px/1 var(--font-sym); color: var(--sun);
+  text-shadow: 2px 0 var(--fg), -2px 0 var(--fg), 0 2px var(--fg), 0 -2px var(--fg), 1.5px 1.5px var(--fg), -1.5px -1.5px var(--fg), 1.5px -1.5px var(--fg), -1.5px 1.5px var(--fg);
+}
+.idx { position: absolute; font: 700 17px/1 var(--font-sym); color: var(--pc-ink); }
+.idx.tl { top: 9px; left: 10px; }
+.idx.br { bottom: 9px; right: 10px; transform: rotate(180deg); }
+.pname { font: 400 22px/1.1 var(--font-display); max-width: 100%; padding-inline: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.egg {
+  width: 104px; height: 124px; margin: 4px 0; border: 3px solid var(--fg); border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  display: flex; align-items: center; justify-content: center;
+  background:
+    radial-gradient(circle at 24% 27%, var(--pc) 0 8%, transparent 8.6%),
+    radial-gradient(circle at 80% 22%, var(--pc) 0 6.5%, transparent 7.1%),
+    radial-gradient(circle at 83% 74%, var(--pc) 0 9%, transparent 9.6%),
+    radial-gradient(circle at 19% 76%, var(--pc) 0 6%, transparent 6.6%),
+    var(--egg);
+}
+.total { font: 400 64px/1 var(--font-display); font-variant-numeric: tabular-nums; color: var(--on-pc); margin-top: 6px; }
+.total.t3 { font-size: 44px; }
+.sub { font-size: 13px; color: var(--muted); padding-inline: 8px; padding-bottom: 14px; min-height: 40px; display: flex; align-items: center; justify-content: center; line-height: 1.25; }
+.win-btn {
+  min-height: 58px; border-radius: var(--wob); border: 3px solid var(--fg); background: var(--pc); color: var(--on-pc);
+  font: 400 19px/1.1 var(--font-display); cursor: pointer; box-shadow: 0 5px 0 var(--fg); padding: 4px 8px;
+}
+.win-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--fg); }
+
+:root[data-game="uno"] .face { background: var(--pc); color: var(--on-pc); }
+:root[data-game="uno"] .idx { color: var(--on-pc); }
+:root[data-game="uno"] .sub { color: var(--on-pc); }
+
+.last { margin: 0; text-align: center; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.actions .btn { flex: 1 1 140px; }
+.card { background: var(--surface); border: 3px solid var(--fg); border-radius: var(--wob); padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0; box-shadow: 0 4px 0 var(--shadow); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+input[type="text"], textarea {
+  width: 100%; min-width: 0; min-height: 48px; border-radius: 12px; border: 2.5px solid var(--fg);
+  background: var(--bg); color: var(--fg); font: 500 16px var(--font-body); padding: 0 12px;
+}
+textarea { min-height: 90px; padding: 10px 12px; font-size: 13px; resize: vertical; }
+
+details { background: var(--surface); border: 3px solid var(--fg); border-radius: var(--wob); padding: 0 14px; box-shadow: 0 4px 0 var(--shadow); }
+summary { min-height: 50px; display: flex; align-items: center; font: 400 19px var(--font-display); cursor: pointer; }
+details[open] summary { border-bottom: 2.5px dashed var(--line); margin-bottom: 14px; }
+details .body { display: flex; flex-direction: column; gap: 12px; padding-bottom: 14px; }
+
+.tablebox { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { padding: 10px 8px; text-align: center; border-bottom: 2.5px dashed var(--line); }
+thead th { font-size: 14px; font-weight: 600; }
+.stat tbody th { text-align: left; color: var(--muted); font-weight: 500; }
+.stat td { font: 600 16px var(--font-body); }
+.stat td.best { font: 400 20px var(--font-display); }
+tr:last-child th, tr:last-child td { border-bottom: 0; }
+.split { display: flex; height: 16px; border-radius: 99px; overflow: hidden; background: var(--surface2); border: 2.5px solid var(--fg); }
+.split span { display: block; height: 100%; }
+.split .sa { background: var(--a); }
+.split .sb { background: var(--b); }
+.score-line { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; }
+.score-line .big { font: 400 46px/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.score-line .who { font: 400 20px var(--font-display); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.score-line .who:last-child { text-align: right; }
+.form { display: flex; gap: 6px; flex-wrap: wrap; }
+.mc {
+  display: inline-flex; align-items: center; justify-content: center; flex: none; width: 26px; height: 36px; border-radius: 7px;
+  font: 700 13px var(--font-sym); font-style: normal; background: var(--pc); color: var(--on-pc); border: 2.5px solid var(--fg);
+}
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 14px; }
+svg { display: block; width: 100%; height: auto; }
+.ax { font: 11px var(--font-body); fill: var(--muted); }
+.grid { stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.fact { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 2.5px dashed var(--line); }
+.fact:last-child { border-bottom: 0; }
+.fact b { font: 400 18px var(--font-display); font-variant-numeric: tabular-nums; text-align: right; }
+.fact .gname { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+
+ul.hist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.hrow { background: var(--surface); border: 3px solid var(--fg); border-radius: var(--wob); padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; box-shadow: 0 4px 0 var(--shadow); }
+.hrow .left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.hrow .win { font: 400 20px var(--font-display); }
+.hrow .left > div { min-width: 0; }
+.empty { margin: 0; color: var(--muted); }
+
+.grass { height: 30px; margin-top: 2px; background: radial-gradient(circle at 50% 100%, var(--hill) 0 15px, transparent 15.6px) 0 0 / 30px 30px repeat-x; }
+
+#toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  background: var(--fg); color: var(--bg); padding: 10px 18px; border-radius: var(--wob); font-weight: 600; font-size: 14.5px;
+  max-width: calc(100% - 32px); z-index: 40; text-align: center;
+}
+
+/* Imagem para compartilhar */
+.sheet {
+  position: fixed; inset: 0; z-index: 35; background: rgba(20,14,8,.6); overflow-y: auto;
+  padding-block: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.sheet-in { max-width: 420px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; background: var(--surface); border: 3px solid var(--fg); border-radius: var(--wob); padding: 14px; }
+.sheet-in img { width: 100%; height: auto; border: 3px solid var(--fg); border-radius: 12px; display: block; background: var(--bg); }
+
+/* Comemoração em poucos quadros, como giz de cera animado */
+#fx { position: fixed; inset: 0; pointer-events: none; z-index: 30; overflow: hidden; }
+.cf { position: absolute; width: 0; height: 0; animation: fly 1.05s steps(3) both; }
+.cf b {
+  position: absolute; left: -13px; top: -13px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+  font: 400 26px/1 var(--font-sym); animation: wig .4s steps(1) infinite;
+}
+.cf .p-star, .cf .p-flower {
+  text-shadow: 2px 0 var(--fg), -2px 0 var(--fg), 0 2px var(--fg), 0 -2px var(--fg), 1.5px 1.5px var(--fg), -1.5px -1.5px var(--fg), 1.5px -1.5px var(--fg), -1.5px 1.5px var(--fg);
+}
+.cf .p-egg {
+  left: -9px; top: -11px; width: 18px; height: 22px; border: 2.5px solid var(--fg); border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  background: radial-gradient(circle at 35% 38%, var(--spot, #8FD14F) 0 24%, transparent 26%), var(--egg);
+}
+.cf .p-dot { left: -7px; top: -7px; width: 14px; height: 14px; border: 2.5px solid var(--fg); border-radius: 50%; }
+.plus {
+  position: absolute; transform: translateX(-50%); font: 400 48px/1 var(--font-display); color: var(--sun);
+  text-shadow: 3px 0 var(--fg), -3px 0 var(--fg), 0 3px var(--fg), 0 -3px var(--fg), 2px 2px var(--fg), -2px -2px var(--fg), 2px -2px var(--fg), -2px 2px var(--fg);
+  animation: rise 1s steps(1) both;
+}
+.bn {
+  position: absolute; left: 50%; top: 36%; transform: translate(-50%, -50%); background: var(--sun); color: var(--on-pc);
+  border: 4px solid var(--fg); border-radius: var(--wob); padding: 12px 24px 10px; text-align: center; box-shadow: 0 6px 0 var(--shadow);
+  font: 400 28px/1.1 var(--font-display); white-space: nowrap; max-width: 92vw; animation: pop 1.7s steps(1) both;
+}
+.bn small { display: block; font: 600 16px var(--font-body); }
+.egg.hop { animation: hop .7s steps(1) both; }
+@keyframes fly {
+  0% { transform: translate(0, 0) scale(.4); opacity: 1; }
+  35% { transform: translate(calc(var(--dx) * .7), calc(var(--dy) * .9)) scale(1.1); }
+  70% { transform: translate(var(--dx), calc(var(--dy) + 40px)) scale(1); }
+  100% { transform: translate(calc(var(--dx) * 1.05), calc(var(--dy) + 120px)) scale(.9); opacity: 0; }
+}
+@keyframes wig { 0% { transform: rotate(-14deg); } 50% { transform: rotate(14deg); } }
+@keyframes hop {
+  0% { transform: translateY(0); } 20% { transform: translateY(-16px) rotate(-5deg); } 40% { transform: translateY(0) rotate(3deg); }
+  60% { transform: translateY(-8px) rotate(-3deg); } 80% { transform: translateY(0) rotate(2deg); } 100% { transform: none; }
+}
+@keyframes rise {
+  0% { transform: translate(-50%, 0) scale(.6) rotate(-6deg); opacity: 1; } 20% { transform: translate(-50%, -14px) scale(1.2) rotate(4deg); }
+  40% { transform: translate(-50%, -28px) scale(1) rotate(-3deg); } 70% { transform: translate(-50%, -40px) scale(1) rotate(3deg); }
+  90% { transform: translate(-50%, -50px) scale(1) rotate(-2deg); opacity: .6; } 100% { transform: translate(-50%, -52px); opacity: 0; }
+}
+@keyframes pop {
+  0% { transform: translate(-50%, -50%) scale(.3) rotate(-10deg); opacity: 0; } 12% { transform: translate(-50%, -50%) scale(1.25) rotate(4deg); opacity: 1; }
+  24% { transform: translate(-50%, -50%) scale(.95) rotate(-4deg); } 36% { transform: translate(-50%, -50%) scale(1.08) rotate(3deg); }
+  50% { transform: translate(-50%, -50%) scale(1) rotate(-3deg); } 70% { transform: translate(-50%, -50%) scale(1.04) rotate(2deg); }
+  88% { transform: translate(-50%, -50%) scale(1) rotate(-2deg); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(.9) rotate(-2deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } #fx { display: none; } .egg.hop { animation: none; } }
+@media (max-width: 380px) { .games button { font-size: 17px; gap: 5px; } h1 { font-size: 30px; } .bn { font-size: 24px; padding-inline: 14px; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1 id="title">Placar de Pife</h1>
+    <div class="fan" id="fan" aria-hidden="true"></div>
+  </div>
+
+  <div class="scene" aria-hidden="true">
+    <svg viewBox="0 0 360 78" preserveAspectRatio="xMidYMax slice" focusable="false">
+      <circle class="s-sun" cx="322" cy="20" r="11"/>
+      <g class="s-cloud">
+        <circle cx="46" cy="24" r="9"/><circle cx="59" cy="19" r="12"/><circle cx="74" cy="24" r="9"/><rect x="40" y="24" width="42" height="9" rx="4.5"/>
+        <circle cx="196" cy="15" r="7"/><circle cx="206" cy="11" r="9"/><circle cx="218" cy="15" r="7"/><rect x="190" y="15" width="34" height="7" rx="3.5"/>
+      </g>
+      <ellipse class="s-hill2" cx="90" cy="88" rx="120" ry="46"/>
+      <g>
+        <path class="s-stem" d="M90 38 V44"/>
+        <circle class="s-petal" cx="90" cy="32" r="4.5"/><circle class="s-petal" cx="95.7" cy="36" r="4.5"/><circle class="s-petal" cx="93.5" cy="42.5" r="4.5"/><circle class="s-petal" cx="86.5" cy="42.5" r="4.5"/><circle class="s-petal" cx="84.3" cy="36" r="4.5"/>
+        <circle class="s-core" cx="90" cy="38" r="3.5"/>
+        <path class="s-stem" d="M160 44 V52"/>
+        <circle class="s-petal2" cx="160" cy="36" r="4"/><circle class="s-petal2" cx="165" cy="39.5" r="4"/><circle class="s-petal2" cx="163" cy="45" r="4"/><circle class="s-petal2" cx="157" cy="45" r="4"/><circle class="s-petal2" cx="155" cy="39.5" r="4"/>
+        <circle class="s-core" cx="160" cy="41" r="3.2"/>
+      </g>
+      <ellipse class="s-hill" cx="270" cy="92" rx="140" ry="44"/>
+      <ellipse class="s-hill" cx="-8" cy="90" rx="64" ry="30"/>
+      <g>
+        <path class="s-stem" d="M250 44 V50"/>
+        <circle class="s-petal2" cx="250" cy="34" r="4.5"/><circle class="s-petal2" cx="255.7" cy="38" r="4.5"/><circle class="s-petal2" cx="253.5" cy="44.5" r="4.5"/><circle class="s-petal2" cx="246.5" cy="44.5" r="4.5"/><circle class="s-petal2" cx="244.3" cy="38" r="4.5"/>
+        <circle class="s-core" cx="250" cy="40" r="3.5"/>
+        <path class="s-stem" d="M303 44 V51"/>
+        <circle class="s-petal" cx="303" cy="35" r="4"/><circle class="s-petal" cx="308" cy="38.5" r="4"/><circle class="s-petal" cx="306" cy="44" r="4"/><circle class="s-petal" cx="300" cy="44" r="4"/><circle class="s-petal" cx="298" cy="38.5" r="4"/>
+        <circle class="s-core" cx="303" cy="40" r="3.2"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="games" id="games" role="group" aria-label="Jogo"></div>
+
+  <div class="tabs" role="tablist" aria-label="Seções">
+    <button role="tab" id="t-jogo" data-tab="jogo" aria-selected="true">Placar</button>
+    <button role="tab" id="t-stats" data-tab="stats" aria-selected="false">Estatísticas</button>
+    <button role="tab" id="t-hist" data-tab="hist" aria-selected="false">Histórico</button>
+  </div>
+
+  <div class="period" id="period" role="group" aria-label="Período">
+    <span class="l">Período</span>
+    <div class="chips">
+      <button type="button" class="chip" data-period="tudo" aria-pressed="true">Tudo</button>
+      <button type="button" class="chip" data-period="mes" aria-pressed="false">Este mês</button>
+      <button type="button" class="chip" data-period="7d" aria-pressed="false">7 dias</button>
+    </div>
+  </div>
+
+  <section id="tab-jogo">
+    <div id="board"></div>
+    <p id="last" class="last muted small"></p>
+    <div class="actions">
+      <button type="button" class="btn" id="undo">Desfazer última vitória</button>
+    </div>
+
+    <details>
+      <summary>Ajustes e backup</summary>
+      <div class="body">
+        <div class="pair">
+          <div><label class="l" for="nameA">Jogador 1</label><input type="text" id="nameA" maxlength="20"></div>
+          <div><label class="l" for="nameB">Jogador 2</label><input type="text" id="nameB" maxlength="20"></div>
+        </div>
+        <div>
+          <label class="l" for="backup">Backup dos dados (todos os jogos)</label>
+          <textarea id="backup" placeholder="Toque em Copiar dados para guardar uma cópia. Para restaurar, cole aqui e toque em Restaurar."></textarea>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn" id="copyData">Copiar dados</button>
+          <button type="button" class="btn" id="restoreData">Restaurar</button>
+        </div>
+        <button type="button" class="btn danger" id="resetAll">Zerar o Pife</button>
+        <button type="button" class="btn danger" id="delGame" hidden>Excluir este jogo</button>
+        <p class="muted small" style="margin:0">Os nomes valem para todos os jogos. Os dados ficam salvos neste aparelho e navegador. Guarde uma cópia se quiser usar em outro lugar.</p>
+      </div>
+    </details>
+  </section>
+
+  <section id="tab-stats" hidden></section>
+  <section id="tab-hist" hidden></section>
+  <section id="tab-geral" hidden></section>
+  <section id="tab-novo" hidden></section>
+  <div class="grass" aria-hidden="true"></div>
+</div>
+
+<div id="fx" aria-hidden="true"></div>
+
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-label="Imagem para compartilhar">
+  <div class="sheet-in">
+    <img id="shareImg" alt="Cartão do placar">
+    <div class="actions">
+      <button type="button" class="btn go" id="shareSave">Salvar imagem</button>
+      <button type="button" class="btn" id="shareClose">Fechar</button>
+    </div>
+    <p class="muted small" style="margin:0">Se o botão não salvar, segure a imagem e escolha salvar.</p>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function () {
+  var KEY = 'pife-placar-v1';
+  var $ = function (id) { return document.getElementById(id); };
+  var PAL = [{ a: '#8FD14F', b: '#FF9DB5' }, { a: '#6EB6F2', b: '#FF8F8F' }, { a: '#FFB35C', b: '#B79CFF' }, { a: '#5FD6C9', b: '#FFE066' }];
+  var PALINK = [['#3F7A1E', '#C23A5E'], ['#1F5FA8', '#C23A3A'], ['#A8560A', '#6B45C9'], ['#12766C', '#8A6A00']];
+  var PALNAME = ['verde e rosa', 'azul e vermelho', 'laranja e lilás', 'turquesa e amarelo'];
+  var BUILTIN = [
+    { id: 'pife', label: 'Pife', glyph: ['♣', '♦'], shout: 'Bateu!', pal: 1 },
+    { id: 'uno', label: 'Uno', glyph: ['⇄', '+2'], shout: 'UNO!', pal: 2 }
+  ];
+  var SYMS = [['♠', '♥'], ['♣', '♦'], ['♔', '♚'], ['⚀', '⚅'], ['●', '○'], ['★', '☆'], ['♪', '♫'], ['✿', '❀']];
+  var PRESETS = [
+    { name: 'Truco', sym: 0, pal: 3 }, { name: 'Dominó', sym: 3, pal: 4 }, { name: 'Xadrez', sym: 2, pal: 2 },
+    { name: 'Dama', sym: 4, pal: 3 }, { name: 'Buraco', sym: 1, pal: 1 }
+  ];
+  var MAX_EXTRA = 4;
+  var PERIODS = { tudo: 'Todas as partidas', mes: 'Este mês', '7d': 'Últimos 7 dias' };
+  var tab = 'jogo';
+  var adding = false;
+  var draft = { name: '', sym: 0, pal: 1 };
+  var armedDel = null, armTimer = null, resetTimer = null, delTimer = null, fxTimer = null;
+  var shareBlob = null, shareName = '', shareUrl = null;
+
+  /* ---------- Dados ---------- */
+  function cleanGames(arr) {
+    if (!Array.isArray(arr)) return [];
+    return arr.filter(function (g) { return g && (g.winner === 0 || g.winner === 1); })
+      .map(function (g, i) { return { id: g.id || (Date.now() + i), date: g.date || new Date().toISOString(), winner: g.winner }; });
+  }
+  function normalize(s) {
+    var o = { names: ['Paulo', 'Manu'], game: 'pife', period: 'tudo', pife: [], uno: [], extra: [] };
+    if (!s) return o;
+    if (Array.isArray(s.names) && s.names.length >= 2) {
+      var n0 = String(s.names[0] || '').trim(), n1 = String(s.names[1] || '').trim();
+      if (!n0 || n0 === 'Eu') n0 = 'Paulo';
+      if (!n1 || n1 === 'Ela') n1 = 'Manu';
+      o.names = [n0.slice(0, 20), n1.slice(0, 20)];
+    }
+    o.period = PERIODS[s.period] ? s.period : 'tudo';
+    o.pife = cleanGames(s.pife || s.games);
+    o.uno = cleanGames(s.uno);
+    if (Array.isArray(s.extra)) {
+      o.extra = s.extra.filter(function (e) { return e && typeof e.id === 'string' && typeof e.name === 'string' && e.name.trim() && Array.isArray(e.sym) && e.sym.length >= 2; })
+        .slice(0, MAX_EXTRA)
+        .map(function (e) {
+          var pal = parseInt(e.pal, 10);
+          return { id: e.id.slice(0, 24), name: e.name.trim().slice(0, 16), sym: [String(e.sym[0]).slice(0, 2), String(e.sym[1]).slice(0, 2)], pal: pal >= 1 && pal <= 4 ? pal : 1, games: cleanGames(e.games) };
+        });
+    }
+    var okIds = ['pife', 'uno', 'geral'].concat(o.extra.map(function (e) { return e.id; }));
+    o.game = okIds.indexOf(s.game) > -1 ? s.game : 'pife';
+    return o;
+  }
+  function load() {
+    try { var r = localStorage.getItem(KEY); if (r) return normalize(JSON.parse(r)); } catch (e) {}
+    return normalize(null);
+  }
+  var state = load();
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  function games() {
+    return BUILTIN.concat(state.extra.map(function (e) { return { id: e.id, label: e.name, glyph: e.sym, shout: 'Ganhou!', pal: e.pal, custom: true }; }));
+  }
+  function gm(id) {
+    var all = games();
+    for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i];
+    return BUILTIN[0];
+  }
+  function data(id) {
+    if (id === 'pife' || id === 'uno') return state[id];
+    for (var i = 0; i < state.extra.length; i++) if (state.extra[i].id === id) return state.extra[i].games;
+    return [];
+  }
+  function cur() { return state.game; }
+  function list() { return cur() === 'geral' ? [] : data(cur()); }
+
+  function periodStart() {
+    var now = new Date();
+    if (state.period === 'mes') return new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    if (state.period === '7d') return Date.now() - 7 * 864e5;
+    return 0;
+  }
+  function filt(arr) {
+    var t = periodStart();
+    if (!t) return arr;
+    return arr.filter(function (g) { return Date.parse(g.date) >= t; });
+  }
+  function view() { return filt(list()); }
+  function allFiltered() {
+    var all = [];
+    games().forEach(function (gx) {
+      filt(data(gx.id)).forEach(function (x) { all.push({ id: x.id, date: x.date, winner: x.winner, game: gx.id }); });
+    });
+    all.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id; });
+    return all;
+  }
+
+  /* ---------- Utilidades ---------- */
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function nm(i) { return state.names[i]; }
+  function palOf(id) { return PAL[gm(id).pal - 1]; }
+  function badge(i, id) {
+    id = id || cur();
+    var p = palOf(id);
+    return '<i class="mc" style="--pc:' + (i ? p.b : p.a) + '" aria-hidden="true">' + esc(gm(id).glyph[i]) + '</i>';
+  }
+  function who(i) { return '<span class="who ' + (i ? 'pb' : 'pa') + '"><span class="sw"></span>' + esc(nm(i)) + '</span>'; }
+  function toast(msg) {
+    var el = $('toast');
+    el.textContent = msg; el.hidden = false;
+    clearTimeout(toast.t);
+    toast.t = setTimeout(function () { el.hidden = true; }, 2600);
+  }
+  function fmtDate(iso) {
+    return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+  function slug(s) { return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'jogo'; }
+
+  function compute(arr) {
+    var g = arr, n = g.length;
+    var wins = [0, 0], best = [0, 0], run = [0, 0], lead = [0, 0];
+    g.forEach(function (game) {
+      var w = game.winner;
+      wins[w]++;
+      run[w]++; if (run[w] > best[w]) best[w] = run[w];
+      run[1 - w] = 0;
+      if (wins[0] - wins[1] > lead[0]) lead[0] = wins[0] - wins[1];
+      if (wins[1] - wins[0] > lead[1]) lead[1] = wins[1] - wins[0];
+    });
+    return { n: n, wins: wins, best: best, cur: run, lead: lead };
+  }
+  function leadText(S) {
+    if (!S.n) return 'sem partidas';
+    var d = S.wins[0] - S.wins[1];
+    return d === 0 ? 'empatados' : nm(d > 0 ? 0 : 1) + ' +' + Math.abs(d);
+  }
+  function emptyCard(title) {
+    var msg = list().length || (cur() === 'geral' && allFiltered().length === 0 && state.period !== 'tudo')
+      ? (state.period !== 'tudo' ? 'Nenhuma partida neste período. Troque o período acima para ver as outras.' : '')
+      : '';
+    if (!msg) msg = cur() === 'geral'
+      ? 'Registre vitórias em qualquer jogo para ver o resumo geral aqui.'
+      : 'Registre a primeira vitória na aba Placar para ver aproveitamento, sequências e o gráfico aqui.';
+    return '<div class="card"><h2>' + title + '</h2><p class="empty">' + msg + '</p></div>';
+  }
+
+  /* ---------- Cabeçalho ---------- */
+  function glyphHtml(gx) {
+    if (gx.id === 'pife') return '<span class="gl suits" aria-hidden="true">♠♦</span>';
+    if (gx.id === 'uno') return '<span class="gl blocks" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
+    return '<span class="gl suits" aria-hidden="true">' + esc(gx.glyph[0]) + '</span>';
+  }
+  function renderHead() {
+    var g = cur(), root = document.documentElement, meta = g === 'geral' ? null : gm(g);
+    var theme = adding ? 'novo' : g === 'geral' ? 'geral' : (meta.custom ? 'custom' : g);
+    root.setAttribute('data-game', theme);
+    if (!adding && meta && meta.custom) root.setAttribute('data-pal', meta.pal); else root.removeAttribute('data-pal');
+    $('title').textContent = adding ? 'Novo jogo' : g === 'geral' ? 'Placar geral' : 'Placar de ' + meta.label;
+
+    var FANS = {
+      pife: [['♠', 'w'], ['♥', 'w r'], ['♦', 'w r'], ['♣', 'w']],
+      uno: [['⇄', 'blue'], ['⊘', 'red'], ['+2', 'yellow'], ['7', 'green']],
+      geral: [['♠', 'w'], ['♥', 'w r'], ['⇄', 'blue'], ['+2', 'yellow']]
+    };
+    var fan = adding || g === 'geral' ? FANS.geral : meta.custom
+      ? [[meta.glyph[0], 'ca'], [meta.glyph[1], 'cb'], [meta.glyph[0], 'ca'], [meta.glyph[1], 'cb']] : FANS[g];
+    $('fan').innerHTML = fan.map(function (x) { return '<i class="' + x[1] + '">' + esc(x[0]) + '</i>'; }).join('');
+
+    var html = games().map(function (gx) {
+      return '<button type="button" data-game="' + esc(gx.id) + '" aria-pressed="' + (!adding && g === gx.id) + '">' + glyphHtml(gx) + '<span class="gt">' + esc(gx.label) + '</span></button>';
+    }).join('');
+    html += '<button type="button" data-game="geral" aria-pressed="' + (!adding && g === 'geral') + '"><span class="gl sum" aria-hidden="true">Σ</span><span class="gt">Geral</span></button>';
+    html += '<button type="button" class="add" data-add="1" aria-pressed="' + adding + '" aria-label="Criar novo jogo"><span class="gl sum" aria-hidden="true">+</span><span class="gt">Novo</span></button>';
+    $('games').innerHTML = html;
+
+    ['tudo', 'mes', '7d'].forEach(function (p) {
+      var b = document.querySelector('[data-period="' + p + '"]');
+      if (b) b.setAttribute('aria-pressed', state.period === p ? 'true' : 'false');
+    });
+
+    var custom = !!(meta && meta.custom);
+    $('delGame').hidden = !custom;
+    var rb = $('resetAll');
+    if (meta && !rb.getAttribute('data-armed')) rb.textContent = 'Zerar o ' + meta.label;
+  }
+
+  /* ---------- Placar ---------- */
+  function renderGame() {
+    var arr = view(), S = compute(arr), meta = gm(cur());
+    var top = S.wins[0] === S.wins[1] ? null : (S.wins[0] > S.wins[1] ? 0 : 1);
+    $('board').innerHTML = [0, 1].map(function (i) {
+      var pct = S.n ? Math.round(S.wins[i] / S.n * 100) + '% das partidas' : (state.period === 'tudo' ? 'Nenhuma partida ainda' : 'Nenhuma partida no período');
+      var streak = S.cur[i] >= 2 ? ' · ' + S.cur[i] + ' seguidas' : '';
+      return '<div class="player ' + (i ? 'pb' : 'pa') + (top === i ? ' lead' : '') + '">' +
+        '<div class="face">' +
+          '<span class="idx tl" aria-hidden="true">' + esc(meta.glyph[i]) + '</span><span class="idx br" aria-hidden="true">' + esc(meta.glyph[i]) + '</span>' +
+          '<div class="pname">' + esc(nm(i)) + '</div>' +
+          '<div class="egg"><div class="total' + (S.wins[i] >= 100 ? ' t3' : '') + '" aria-label="' + S.wins[i] + ' vitórias">' + S.wins[i] + '</div></div>' +
+          '<div class="sub">' + pct + streak + '</div>' +
+        '</div>' +
+        '<button type="button" class="win-btn" data-win="' + i + '">' + esc(meta.shout) + ' +1 vitória</button></div>';
+    }).join('');
+    var l = list()[list().length - 1];
+    $('last').textContent = l ? 'Última vitória: ' + nm(l.winner) + ', ' + fmtDate(l.date) : 'Toque no botão do jogador quando ele ganhar uma partida de ' + meta.label + '.';
+  }
+
+  /* ---------- Estatísticas ---------- */
+  function chartSvg(arr) {
+    var games = arr, n = games.length, W = 320, H = 150, pl = 26, pr = 12, pt = 10, pb = 24;
+    var ca = [0], cb = [0];
+    games.forEach(function (g, i) { ca.push(ca[i] + (g.winner === 0 ? 1 : 0)); cb.push(cb[i] + (g.winner === 1 ? 1 : 0)); });
+    var maxY = Math.max(1, ca[n], cb[n]);
+    function X(i) { return pl + (W - pl - pr) * (i / n); }
+    function Y(v) { return pt + (H - pt - pb) * (1 - v / maxY); }
+    var ticks = [0];
+    if (maxY >= 4) ticks.push(Math.round(maxY / 2));
+    ticks.push(maxY);
+    var grid = ticks.map(function (v) {
+      return '<line class="grid" x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(v) + '" y2="' + Y(v) + '"/><text class="ax" x="' + (pl - 6) + '" y="' + (Y(v) + 4) + '" text-anchor="end">' + v + '</text>';
+    }).join('');
+    function line(arr2, color) {
+      var pts = arr2.map(function (v, i) { return X(i).toFixed(1) + ',' + Y(v).toFixed(1); }).join(' ');
+      return '<polyline points="' + pts + '" fill="none" stroke="var(' + color + ')" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>' +
+        '<circle cx="' + X(n).toFixed(1) + '" cy="' + Y(arr2[n]).toFixed(1) + '" r="5" fill="var(' + color + ')" stroke="var(--fg)" stroke-width="2"/>';
+    }
+    var xl = '<text class="ax" x="' + pl + '" y="' + (H - 6) + '" text-anchor="start">início</text><text class="ax" x="' + (W - pr) + '" y="' + (H - 6) + '" text-anchor="end">' + n + ' partidas</text>';
+    var label = 'Vitórias acumuladas: ' + nm(0) + ' ' + ca[n] + ', ' + nm(1) + ' ' + cb[n];
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(label) + '">' + grid + xl + line(ca, '--a-ink') + line(cb, '--b-ink') + '</svg>';
+  }
+  function head() {
+    return '<tr><th></th><th class="pa"><span class="sw"></span>' + esc(nm(0)) + '</th><th class="pb"><span class="sw"></span>' + esc(nm(1)) + '</th></tr>';
+  }
+  function tableRows(rows) {
+    return rows.map(function (r) {
+      return '<tr><th scope="row">' + r[0] + '</th><td class="' + (r[1] > r[2] ? 'best' : '') + '">' + r[3] + '</td><td class="' + (r[2] > r[1] ? 'best' : '') + '">' + r[4] + '</td></tr>';
+    }).join('');
+  }
+  function chartBlock(arr) {
+    return arr.length >= 2
+      ? chartSvg(arr) + '<div class="legend"><span class="pa"><span class="sw"></span>' + esc(nm(0)) + '</span><span class="pb"><span class="sw"></span>' + esc(nm(1)) + '</span></div>'
+      : '<p class="empty small">O gráfico aparece a partir da segunda partida.</p>';
+  }
+  function shareBtn(scope) {
+    return '<div class="actions"><button type="button" class="btn go" data-share="' + esc(scope) + '">Compartilhar como imagem</button></div>';
+  }
+
+  function renderStats() {
+    var el = $('tab-stats'), arr = view(), S = compute(arr), n = S.n, meta = gm(cur());
+    if (!n) { el.innerHTML = emptyCard('Sem partidas de ' + esc(meta.label)); return; }
+    var pc = function (i) { return Math.round(S.wins[i] / n * 100); };
+    var rows = [
+      ['Vitórias', S.wins[0], S.wins[1], S.wins[0], S.wins[1]],
+      ['Aproveitamento', pc(0), pc(1), pc(0) + '%', pc(1) + '%'],
+      ['Maior sequência de vitórias', S.best[0], S.best[1], S.best[0], S.best[1]],
+      ['Sequência atual', S.cur[0], S.cur[1], S.cur[0], S.cur[1]],
+      ['Maior vantagem no placar', S.lead[0], S.lead[1], S.lead[0], S.lead[1]]
+    ];
+    var last = arr.slice(-10).map(function (x) { return badge(x.winner); }).join('');
+    var diff = S.wins[0] - S.wins[1];
+    var status = diff === 0 ? 'Empatados' : esc(nm(diff > 0 ? 0 : 1)) + ' na frente por ' + Math.abs(diff);
+    el.innerHTML =
+      '<div class="card">' +
+        '<div class="score-line">' + who(0) + '<span class="big">' + S.wins[0] + ' × ' + S.wins[1] + '</span>' + who(1) + '</div>' +
+        '<div class="split" role="img" aria-label="Proporção de vitórias"><span class="sa" style="width:' + (S.wins[0] / n * 100) + '%"></span><span class="sb" style="width:' + (S.wins[1] / n * 100) + '%"></span></div>' +
+        '<p class="muted small" style="margin:0">' + n + ' ' + (n === 1 ? 'partida' : 'partidas') + ' de ' + esc(meta.label) + ' · ' + status + '</p>' +
+      '</div>' +
+      '<div class="card"><h2>Comparação</h2><div class="tablebox"><table class="stat"><thead>' + head() + '</thead><tbody>' + tableRows(rows) + '</tbody></table></div></div>' +
+      '<div class="card"><h2>Últimas partidas</h2><div class="form">' + last + '</div><p class="muted small" style="margin:0">Da mais antiga para a mais recente, até 10 partidas.</p></div>' +
+      '<div class="card"><h2>Vitórias acumuladas</h2>' + chartBlock(arr) + '</div>' +
+      shareBtn(meta.id);
+  }
+
+  function renderGeral() {
+    var el = $('tab-geral'), all = allFiltered(), n = all.length;
+    if (!n) { el.innerHTML = emptyCard('Sem partidas ainda'); return; }
+    var SA = compute(all);
+    var pct = function (i) { return Math.round(SA.wins[i] / n * 100); };
+    var rows = [
+      ['Total de vitórias', SA.wins[0], SA.wins[1], SA.wins[0], SA.wins[1]],
+      ['Aproveitamento geral', pct(0), pct(1), pct(0) + '%', pct(1) + '%'],
+      ['Maior sequência de vitórias', SA.best[0], SA.best[1], SA.best[0], SA.best[1]],
+      ['Sequência atual', SA.cur[0], SA.cur[1], SA.cur[0], SA.cur[1]]
+    ];
+    var perGame = games().map(function (gx) {
+      var A = compute(filt(data(gx.id)));
+      if (!A.n) return '';
+      return '<div class="fact"><span class="gname">' + badge(0, gx.id) + '<span>' + esc(gx.label) + ' · ' + A.n + ' ' + (A.n === 1 ? 'partida' : 'partidas') + '</span></span><b>' + A.wins[0] + ' × ' + A.wins[1] + ' · ' + esc(leadText(A)) + '</b></div>';
+    }).join('');
+    var last = all.slice(-10).map(function (x) { return badge(x.winner, x.game); }).join('');
+    el.innerHTML =
+      '<div class="card">' +
+        '<div class="score-line">' + who(0) + '<span class="big">' + SA.wins[0] + ' × ' + SA.wins[1] + '</span>' + who(1) + '</div>' +
+        '<div class="split" role="img" aria-label="Proporção de vitórias em todos os jogos"><span class="sa" style="width:' + (SA.wins[0] / n * 100) + '%"></span><span class="sb" style="width:' + (SA.wins[1] / n * 100) + '%"></span></div>' +
+        '<p class="muted small" style="margin:0">' + n + ' ' + (n === 1 ? 'partida' : 'partidas') + ' em todos os jogos · ' + esc(leadText(SA)) + '</p>' +
+      '</div>' +
+      '<div class="card"><h2>Por jogo</h2>' + perGame + '</div>' +
+      '<div class="card"><h2>Comparação</h2><div class="tablebox"><table class="stat"><thead>' + head() + '</thead><tbody>' + tableRows(rows) + '</tbody></table></div></div>' +
+      '<div class="card"><h2>Últimas partidas</h2><div class="form">' + last + '</div><p class="muted small" style="margin:0">Da mais antiga para a mais recente, até 10 partidas de todos os jogos juntas.</p></div>' +
+      '<div class="card"><h2>Vitórias acumuladas</h2>' + chartBlock(all) + '</div>' +
+      shareBtn('geral');
+  }
+
+  /* ---------- Histórico ---------- */
+  function renderHist() {
+    var el = $('tab-hist'), meta = gm(cur()), arr = view();
+    if (!arr.length) { el.innerHTML = emptyCard('Histórico de ' + esc(meta.label) + ' vazio'); return; }
+    var total = arr.length;
+    var items = arr.map(function (x, i) { return { g: x, n: i + 1 }; }).reverse().map(function (o) {
+      var x = o.g;
+      return '<li class="hrow ' + (x.winner ? 'pb' : 'pa') + '"><div class="left">' + badge(x.winner) + '<div><span class="win">' + esc(nm(x.winner)) + '</span> venceu' +
+        '<div class="muted small">Partida ' + o.n + ' de ' + total + ' · ' + fmtDate(x.date) + '</div></div></div>' +
+        '<button type="button" class="btn small' + (armedDel === x.id ? ' danger' : '') + '" data-del="' + x.id + '">' + (armedDel === x.id ? 'Confirmar?' : 'Excluir') + '</button></li>';
+    }).join('');
+    el.innerHTML = '<ul class="hist">' + items + '</ul>';
+  }
+
+  /* ---------- Novo jogo ---------- */
+  function renderNovo() {
+    var presets = PRESETS.map(function (p, i) {
+      return '<button type="button" class="chip" data-preset="' + i + '" aria-pressed="false"><span class="sym" aria-hidden="true">' + esc(SYMS[p.sym][0]) + '</span>' + esc(p.name) + '</button>';
+    }).join('');
+    var syms = SYMS.map(function (s, i) {
+      return '<button type="button" class="chip" data-sym="' + i + '" aria-pressed="' + (draft.sym === i) + '" aria-label="Símbolos ' + esc(s[0]) + ' e ' + esc(s[1]) + '"><span class="sym">' + esc(s[0]) + ' ' + esc(s[1]) + '</span></button>';
+    }).join('');
+    var pals = PAL.map(function (p, i) {
+      return '<button type="button" class="chip pal" data-pal="' + (i + 1) + '" aria-pressed="' + (draft.pal === i + 1) + '" aria-label="Cores ' + PALNAME[i] + '"><i style="background:' + p.a + '"></i><i style="background:' + p.b + '"></i></button>';
+    }).join('');
+    $('tab-novo').innerHTML =
+      '<div class="card">' +
+        '<h2>Novo jogo</h2>' +
+        '<p class="muted small" style="margin:0">Cada jogo tem placar, estatísticas e histórico próprios, e entra no resumo Geral. Dá para ter até ' + MAX_EXTRA + ' jogos novos.</p>' +
+        '<div><span class="l">Sugestões</span><div class="chips" id="presets">' + presets + '</div></div>' +
+        '<div><label class="l" for="gname">Nome do jogo</label><input type="text" id="gname" maxlength="16" placeholder="Ex.: Truco" value="' + esc(draft.name) + '" autocomplete="off"></div>' +
+        '<div><span class="l">Símbolos nas cartas</span><div class="chips">' + syms + '</div></div>' +
+        '<div><span class="l">Cores dos jogadores</span><div class="chips">' + pals + '</div></div>' +
+        '<div class="actions"><button type="button" class="btn go" id="gcreate">Criar jogo</button><button type="button" class="btn" id="gcancel">Cancelar</button></div>' +
+      '</div>';
+  }
+
+  function renderTabs() {
+    var geral = cur() === 'geral';
+    document.querySelector('.tabs').hidden = geral || adding;
+    $('period').hidden = adding;
+    $('tab-geral').hidden = !geral || adding;
+    $('tab-novo').hidden = !adding;
+    ['jogo', 'stats', 'hist'].forEach(function (k) {
+      $('tab-' + k).hidden = geral || adding || tab !== k;
+      $('t-' + k).setAttribute('aria-selected', tab === k ? 'true' : 'false');
+    });
+  }
+  function renderAll() {
+    renderHead();
+    if (adding) { renderNovo(); }
+    else if (cur() === 'geral') { renderGeral(); }
+    else { renderGame(); renderStats(); renderHist(); }
+    renderTabs();
+  }
+
+  /* ---------- Comemoração (poucos quadros, estilo giz de cera) ---------- */
+  function celebrate(w, streak) {
+    var milestone = streak === 3 || streak === 5 || streak === 10 || (streak > 10 && streak % 5 === 0);
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var egg = document.querySelectorAll('#board .egg')[w];
+    if (reduce || !egg) { if (milestone) toast(nm(w) + ': ' + streak + ' seguidas!'); return; }
+    var fx = $('fx');
+    fx.innerHTML = '';
+    egg.classList.add('hop');
+    var r = egg.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    var p = palOf(cur()), col = w ? p.b : p.a;
+    var kinds = ['star', 'egg', 'flower', 'dot'];
+    for (var k = 0; k < 16; k++) {
+      var a = (k / 16) * Math.PI * 2 + (Math.random() - 0.5) * 0.35, d = 70 + Math.random() * 90;
+      var el = document.createElement('div');
+      el.className = 'cf';
+      el.style.left = cx + 'px'; el.style.top = cy + 'px';
+      el.style.setProperty('--dx', Math.round(Math.cos(a) * d) + 'px');
+      el.style.setProperty('--dy', Math.round(Math.sin(a) * d - 40) + 'px');
+      el.style.animationDelay = (Math.floor(Math.random() * 3) * 0.08) + 's';
+      var kind = kinds[k % 4], b = document.createElement('b');
+      b.className = 'p-' + kind;
+      if (kind === 'star') { b.textContent = '★'; b.style.color = 'var(--sun)'; }
+      else if (kind === 'flower') { b.textContent = '✿'; b.style.color = col; }
+      else if (kind === 'egg') { b.style.setProperty('--spot', col); }
+      else { b.style.background = k % 8 < 4 ? col : 'var(--egg)'; }
+      el.appendChild(b);
+      fx.appendChild(el);
+    }
+    var plus = document.createElement('div');
+    plus.className = 'plus'; plus.textContent = '+1';
+    plus.style.left = cx + 'px'; plus.style.top = (cy - 90) + 'px';
+    fx.appendChild(plus);
+    if (milestone) {
+      var bn = document.createElement('div');
+      bn.className = 'bn';
+      bn.innerHTML = '★ ' + streak + ' seguidas! ★<small>' + esc(nm(w)) + '</small>';
+      fx.appendChild(bn);
+    }
+    clearTimeout(fxTimer);
+    fxTimer = setTimeout(function () { fx.innerHTML = ''; }, 1900);
+  }
+
+  /* ---------- Imagem para compartilhar ---------- */
+  function mulberry(seed) {
+    return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  }
+  async function makeCard(scope) {
+    try {
+      await Promise.race([
+        Promise.all([document.fonts.load('64px Chewy'), document.fonts.load('500 36px Fredoka')]),
+        new Promise(function (res) { setTimeout(res, 2500); })
+      ]);
+    } catch (e) {}
+    var W = 1080, H = 1350, c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    var x = c.getContext('2d');
+    var INK = '#4A3220', CREAM = '#FFF8DC', EGG = '#FFFDF0', SKY = '#CFEEF7', SUN = '#FFE066', MUTED = '#6F573D';
+    var DISP = "'Chewy','Comic Sans MS','Trebuchet MS',sans-serif", BODY = "'Fredoka','Trebuchet MS',system-ui,sans-serif";
+    var isGeral = scope === 'geral';
+    var meta = isGeral ? null : gm(scope);
+    var palIdx = isGeral ? 0 : meta.pal - 1, pal = PAL[palIdx], ink2 = PALINK[palIdx];
+    var arr = isGeral ? allFiltered() : filt(data(scope));
+    var S = compute(arr), n = S.n;
+
+    function rr(px, py, pw, ph, r) {
+      x.beginPath(); x.moveTo(px + r, py); x.arcTo(px + pw, py, px + pw, py + ph, r); x.arcTo(px + pw, py + ph, px, py + ph, r);
+      x.arcTo(px, py + ph, px, py, r); x.arcTo(px, py, px + pw, py, r); x.closePath();
+    }
+    function eggPath(cx, cy, w, h) {
+      x.beginPath(); x.moveTo(cx, cy - h / 2);
+      x.bezierCurveTo(cx + w * 0.46, cy - h / 2, cx + w / 2, cy + h * 0.05, cx + w / 2, cy + h * 0.12);
+      x.bezierCurveTo(cx + w / 2, cy + h * 0.40, cx + w * 0.28, cy + h / 2, cx, cy + h / 2);
+      x.bezierCurveTo(cx - w * 0.28, cy + h / 2, cx - w / 2, cy + h * 0.40, cx - w / 2, cy + h * 0.12);
+      x.bezierCurveTo(cx - w / 2, cy + h * 0.05, cx - w * 0.46, cy - h / 2, cx, cy - h / 2);
+      x.closePath();
+    }
+    function crayon(path, lw) {
+      x.save(); x.lineJoin = 'round'; x.lineCap = 'round'; x.strokeStyle = INK;
+      path(); x.lineWidth = lw; x.stroke();
+      x.translate(2.2, -1.6); path(); x.lineWidth = lw * 0.4; x.globalAlpha = 0.5; x.stroke();
+      x.restore();
+    }
+    function boxed(px, py, pw, ph, r, fill) {
+      x.save(); x.fillStyle = 'rgba(74,50,32,.28)'; rr(px, py + 10, pw, ph, r); x.fill(); x.restore();
+      x.fillStyle = fill; rr(px, py, pw, ph, r); x.fill();
+      crayon(function () { rr(px, py, pw, ph, r); }, 8);
+    }
+    function outlineText(t, px, py, font, fill, edge, lw, align) {
+      x.font = font; x.textAlign = align || 'center'; x.textBaseline = 'alphabetic'; x.lineJoin = 'round';
+      x.lineWidth = lw; x.strokeStyle = edge; x.strokeText(t, px, py); x.fillStyle = fill; x.fillText(t, px, py);
+    }
+    function fitFont(t, maxW, size, family, weight) {
+      var s = size;
+      for (; s > 18; s -= 2) { x.font = (weight || '400') + ' ' + s + 'px ' + family; if (x.measureText(t).width <= maxW) break; }
+      return (weight || '400') + ' ' + s + 'px ' + family;
+    }
+    function star(cx, cy, R, r) {
+      x.beginPath();
+      for (var i = 0; i < 10; i++) { var rad = i % 2 ? r : R, an = -Math.PI / 2 + i * Math.PI / 5; x.lineTo(cx + Math.cos(an) * rad, cy + Math.sin(an) * rad); }
+      x.closePath();
+    }
+    function flower(cx, cy, R, petal, core) {
+      for (var i = 0; i < 5; i++) {
+        var an = -Math.PI / 2 + i * Math.PI * 2 / 5;
+        x.beginPath(); x.arc(cx + Math.cos(an) * R, cy + Math.sin(an) * R, R * 0.85, 0, 7);
+        x.fillStyle = petal; x.fill(); x.lineWidth = 4; x.strokeStyle = INK; x.stroke();
+      }
+      x.beginPath(); x.arc(cx, cy, R * 0.7, 0, 7); x.fillStyle = core; x.fill(); x.lineWidth = 4; x.stroke();
+    }
+
+    // fundo
+    x.fillStyle = SKY; x.fillRect(0, 0, W, H);
+    x.fillStyle = 'rgba(255,255,255,.75)';
+    for (var yy = 20; yy < H; yy += 68) for (var xx = (yy / 68 % 2 ? 54 : 20); xx < W; xx += 68) { x.beginPath(); x.arc(xx, yy, 5, 0, 7); x.fill(); }
+
+    // título
+    var title = isGeral ? 'Placar geral' : 'Placar de ' + meta.label;
+    outlineText(title, W / 2, 150, fitFont(title, 900, 108, DISP), '#FFFDF0', INK, 20);
+    x.font = '500 38px ' + BODY; x.textAlign = 'center'; x.fillStyle = INK;
+    x.fillText(PERIODS[state.period] + ' · ' + new Date().toLocaleDateString('pt-BR'), W / 2, 218);
+
+    // cena
+    x.save(); rr(70, 250, 940, 170, 30); x.clip();
+    x.fillStyle = '#A9DFF2'; x.fillRect(70, 250, 940, 170);
+    x.beginPath(); x.arc(930, 306, 28, 0, 7); x.fillStyle = SUN; x.fill(); x.lineWidth = 7; x.strokeStyle = INK; x.stroke();
+    x.fillStyle = '#FFFFFF';
+    [[180, 300, 30], [220, 285, 38], [265, 303, 28], [600, 290, 22], [630, 278, 28], [662, 292, 21]].forEach(function (c2) { x.beginPath(); x.arc(c2[0], c2[1], c2[2], 0, 7); x.fill(); });
+    x.fillRect(150, 300, 145, 30); x.fillRect(578, 292, 106, 20);
+    x.beginPath(); x.ellipse(300, 430, 340, 130, 0, 0, 7); x.fillStyle = '#B7E37A'; x.fill(); x.lineWidth = 7; x.stroke();
+    flower(250, 330, 13, pal.b, SUN);
+    x.beginPath(); x.ellipse(790, 450, 390, 120, 0, 0, 7); x.fillStyle = '#8FD14F'; x.fill(); x.stroke();
+    flower(700, 345, 13, EGG, SUN); flower(900, 352, 13, pal.b, SUN);
+    x.restore();
+    crayon(function () { rr(70, 250, 940, 170, 30); }, 9);
+
+    // jogadores
+    var y0 = 480, ph = 520, pw = 440, leader = S.wins[0] === S.wins[1] ? -1 : (S.wins[0] > S.wins[1] ? 0 : 1);
+    for (var i = 0; i < 2; i++) {
+      var px = i ? 570 : 70, cx = px + pw / 2, color = i ? pal.b : pal.a;
+      boxed(px, y0, pw, ph, 34, CREAM);
+      var glyph = isGeral ? ['♣', '♦'][i] : meta.glyph[i];
+      x.font = '700 44px system-ui,"Segoe UI Symbol","Apple Symbols",sans-serif'; x.textAlign = 'left'; x.fillStyle = ink2[i]; x.fillText(glyph, px + 28, y0 + 66);
+      outlineText(nm(i), cx, y0 + 100, fitFont(nm(i), pw - 150, 62, DISP), INK, INK, 0.1);
+      var ey = y0 + 295, ew = 220, eh = 270;
+      x.fillStyle = EGG; eggPath(cx, ey, ew, eh); x.fill();
+      x.save(); eggPath(cx, ey, ew, eh); x.clip();
+      [[0.24, 0.27, 0.09], [0.80, 0.22, 0.07], [0.83, 0.74, 0.10], [0.19, 0.76, 0.065]].forEach(function (s) {
+        x.beginPath(); x.arc(cx - ew / 2 + s[0] * ew, ey - eh / 2 + s[1] * eh, s[2] * ew, 0, 7); x.fillStyle = color; x.fill();
+      });
+      x.restore();
+      crayon(function () { eggPath(cx, ey, ew, eh); }, 8);
+      var num = String(S.wins[i]);
+      x.font = '400 ' + (num.length > 2 ? 100 : 150) + 'px ' + DISP; x.textAlign = 'center'; x.fillStyle = '#3A2814';
+      x.fillText(num, cx, ey + (num.length > 2 ? 38 : 56));
+      x.font = '500 34px ' + BODY; x.fillStyle = MUTED;
+      x.fillText(n ? Math.round(S.wins[i] / n * 100) + '% das partidas' : 'sem partidas', cx, y0 + ph - 34);
+      if (leader === i) {
+        star(cx, y0 - 8, 44, 19); x.fillStyle = SUN; x.fill(); x.lineWidth = 7; x.strokeStyle = INK; x.lineJoin = 'round'; x.stroke();
+      }
+    }
+
+    // linhas de resumo
+    var rows = [];
+    if (isGeral) {
+      games().forEach(function (gx) {
+        var A = compute(filt(data(gx.id)));
+        if (A.n) rows.push([gx.label + ' · ' + A.n + (A.n === 1 ? ' partida' : ' partidas'), A.wins[0] + ' × ' + A.wins[1]]);
+      });
+    } else {
+      rows.push(['Partidas', String(n)]);
+      rows.push(['Aproveitamento', Math.round(S.wins[0] / n * 100) + '% × ' + Math.round(S.wins[1] / n * 100) + '%']);
+      rows.push(['Maior sequência', S.best[0] + ' × ' + S.best[1]]);
+    }
+    var by = 1030, bh = 235, rowH = Math.min(58, Math.floor((bh - 26) / Math.max(rows.length, 1))), fs = Math.round(rowH * 0.62);
+    boxed(70, by, 940, bh, 30, CREAM);
+    var ty = by + 13 + (bh - 26 - rowH * rows.length) / 2;
+    rows.forEach(function (rw, idx) {
+      var baseline = ty + idx * rowH + rowH * 0.7;
+      x.textAlign = 'left'; x.font = '600 ' + fs + 'px ' + BODY; x.fillStyle = INK; x.fillText(rw[0], 108, baseline);
+      x.textAlign = 'right'; x.font = '400 ' + (fs + 8) + 'px ' + DISP; x.fillText(rw[1], 972, baseline);
+      if (idx < rows.length - 1) {
+        x.save(); x.strokeStyle = '#DCCB9E'; x.lineWidth = 3; x.setLineDash([10, 8]); x.beginPath(); x.moveTo(108, ty + (idx + 1) * rowH); x.lineTo(972, ty + (idx + 1) * rowH); x.stroke(); x.restore();
+      }
+    });
+
+    // grama
+    x.fillStyle = '#8FD14F';
+    for (var gx2 = 0; gx2 < W + 52; gx2 += 52) { x.beginPath(); x.arc(gx2, H, 30, Math.PI, 0); x.fill(); }
+
+    var blob = await new Promise(function (res) { c.toBlob(res, 'image/png'); });
+    return { blob: blob, name: 'placar-' + slug(isGeral ? 'geral' : meta.label) + '-' + new Date().toISOString().slice(0, 10) + '.png' };
+  }
+
+  async function openShare(scope) {
+    toast('Gerando imagem...');
+    try {
+      var out = await makeCard(scope);
+      if (!out.blob) throw new Error('vazio');
+      shareBlob = out.blob; shareName = out.name;
+      if (shareUrl) URL.revokeObjectURL(shareUrl);
+      shareUrl = URL.createObjectURL(out.blob);
+      $('shareImg').src = shareUrl;
+      $('sheet').hidden = false;
+      $('toast').hidden = true;
+      $('shareSave').focus();
+    } catch (e) { toast('Não foi possível gerar a imagem.'); }
+  }
+  function closeShare() {
+    $('sheet').hidden = true;
+    $('shareImg').removeAttribute('src');
+    if (shareUrl) { URL.revokeObjectURL(shareUrl); shareUrl = null; }
+  }
+  async function saveImage() {
+    if (!shareBlob) return;
+    try {
+      if (window.claude && window.claude.use) {
+        var dl = await window.claude.use('downloads');
+        if (dl) {
+          try { var res = await dl.save({ filename: shareName, data: shareBlob }); toast(res && res.status === 'delivered' ? 'Imagem enviada.' : 'Imagem salva.'); return; }
+          catch (err) { if (err && err.code === 'declined') return; /* outros erros: tenta os caminhos abaixo */ }
+        }
+      }
+    } catch (e) {}
+    try {
+      var file = new File([shareBlob], shareName, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Placar' }); return; }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+    try {
+      var a = document.createElement('a');
+      a.href = shareUrl || URL.createObjectURL(shareBlob); a.download = shareName;
+      document.body.appendChild(a); a.click(); a.remove();
+      toast('Imagem baixada.');
+    } catch (e) { toast('Segure a imagem para salvar.'); }
+  }
+
+  /* ---------- Eventos ---------- */
+  $('games').addEventListener('click', function (e) {
+    var add = e.target.closest('button[data-add]');
+    if (add) { adding = true; draft = { name: '', sym: 0, pal: 1 }; armedDel = null; renderAll(); return; }
+    var b = e.target.closest('button[data-game]');
+    if (!b) return;
+    var g = b.getAttribute('data-game');
+    if (g === state.game && !adding) return;
+    adding = false; state.game = g; armedDel = null; save(); renderAll();
+  });
+  document.querySelector('.tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-tab]');
+    if (!b) return;
+    tab = b.getAttribute('data-tab'); renderTabs();
+  });
+  $('period').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-period]');
+    if (!b) return;
+    state.period = b.getAttribute('data-period'); save(); renderAll();
+  });
+
+  $('board').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-win]');
+    if (!b) return;
+    var w = Number(b.getAttribute('data-win'));
+    var arr = list();
+    arr.push({ id: Date.now(), date: new Date().toISOString(), winner: w });
+    save(); renderAll();
+    var streak = compute(arr).cur[w];
+    celebrate(w, streak);
+    toast(gm(cur()).shout + ' Vitória de ' + nm(w) + (streak >= 2 ? ' · ' + streak + ' seguidas' : ''));
+  });
+
+  $('undo').addEventListener('click', function () {
+    if (!list().length) { toast('Não há vitórias para desfazer.'); return; }
+    var g = list().pop();
+    save(); renderAll();
+    toast('Vitória de ' + nm(g.winner) + ' desfeita');
+  });
+
+  $('tab-hist').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-del]');
+    if (!b) return;
+    var id = Number(b.getAttribute('data-del'));
+    if (armedDel === id) {
+      clearTimeout(armTimer); armedDel = null;
+      var kept = list().filter(function (g) { return g.id !== id; });
+      list().length = 0; kept.forEach(function (g) { list().push(g); });
+      save(); renderAll(); toast('Partida excluída.');
+    } else {
+      armedDel = id; renderHist();
+      clearTimeout(armTimer);
+      armTimer = setTimeout(function () { armedDel = null; renderHist(); }, 3000);
+    }
+  });
+
+  document.addEventListener('click', function (e) {
+    var s = e.target.closest('button[data-share]');
+    if (s) openShare(s.getAttribute('data-share'));
+  });
+  $('shareSave').addEventListener('click', saveImage);
+  $('shareClose').addEventListener('click', closeShare);
+  $('sheet').addEventListener('click', function (e) { if (e.target === $('sheet')) closeShare(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('sheet').hidden) closeShare(); });
+
+  // Novo jogo
+  $('tab-novo').addEventListener('input', function (e) {
+    if (e.target.id === 'gname') draft.name = e.target.value;
+  });
+  $('tab-novo').addEventListener('click', function (e) {
+    var p = e.target.closest('button[data-preset]');
+    if (p) { var pr = PRESETS[Number(p.getAttribute('data-preset'))]; draft = { name: pr.name, sym: pr.sym, pal: pr.pal }; renderNovo(); return; }
+    var s = e.target.closest('button[data-sym]');
+    if (s) { draft.sym = Number(s.getAttribute('data-sym')); renderNovo(); return; }
+    var c = e.target.closest('button[data-pal]');
+    if (c) { draft.pal = Number(c.getAttribute('data-pal')); renderNovo(); return; }
+    if (e.target.closest('#gcancel')) { adding = false; renderAll(); return; }
+    if (e.target.closest('#gcreate')) {
+      var name = draft.name.trim();
+      if (!name) { toast('Dê um nome ao jogo.'); return; }
+      var low = name.toLowerCase();
+      if (['pife', 'uno', 'geral'].indexOf(low) > -1 || state.extra.some(function (x) { return x.name.toLowerCase() === low; })) { toast('Já existe um jogo com esse nome.'); return; }
+      if (state.extra.length >= MAX_EXTRA) { toast('Limite de ' + MAX_EXTRA + ' jogos novos.'); return; }
+      var id = 'g' + Date.now().toString(36);
+      state.extra.push({ id: id, name: name.slice(0, 16), sym: SYMS[draft.sym].slice(), pal: draft.pal, games: [] });
+      state.game = id; adding = false; tab = 'jogo'; save(); renderAll();
+      toast('Jogo ' + name + ' criado.');
+    }
+  });
+
+  $('nameA').addEventListener('input', function () { state.names[0] = this.value.trim() || 'Paulo'; save(); renderAll(); });
+  $('nameB').addEventListener('input', function () { state.names[1] = this.value.trim() || 'Manu'; save(); renderAll(); });
+
+  $('copyData').addEventListener('click', function () {
+    var ta = $('backup');
+    ta.value = JSON.stringify(state);
+    function fallback() { ta.focus(); ta.select(); toast('Selecionado. Copie o texto manualmente.'); }
+    try {
+      navigator.clipboard.writeText(ta.value).then(function () { toast('Dados copiados.'); }, fallback);
+    } catch (err) { fallback(); }
+  });
+  $('restoreData').addEventListener('click', function () {
+    var raw = $('backup').value.trim();
+    if (!raw) { toast('Cole o backup no campo primeiro.'); return; }
+    try {
+      var obj = JSON.parse(raw);
+      if (!obj || !(Array.isArray(obj.games) || Array.isArray(obj.pife) || Array.isArray(obj.uno) || Array.isArray(obj.extra))) throw new Error('formato');
+      state = normalize(obj); save(); adding = false;
+      $('nameA').value = state.names[0]; $('nameB').value = state.names[1];
+      renderAll(); toast('Dados restaurados.');
+    } catch (err) { toast('Backup inválido. Confira o texto colado.'); }
+  });
+
+  $('resetAll').addEventListener('click', function () {
+    var b = $('resetAll');
+    if (cur() === 'geral') { toast('Escolha um jogo para zerar.'); return; }
+    if (b.getAttribute('data-armed')) {
+      clearTimeout(resetTimer); b.removeAttribute('data-armed');
+      list().length = 0; save(); renderAll(); toast('Placar de ' + gm(cur()).label + ' zerado.');
+    } else {
+      b.setAttribute('data-armed', '1'); b.textContent = 'Toque de novo para confirmar';
+      resetTimer = setTimeout(function () { b.removeAttribute('data-armed'); renderHead(); }, 3000);
+    }
+  });
+  $('delGame').addEventListener('click', function () {
+    var b = $('delGame'), meta = gm(cur());
+    if (!meta.custom) return;
+    if (b.getAttribute('data-armed')) {
+      clearTimeout(delTimer); b.removeAttribute('data-armed'); b.textContent = 'Excluir este jogo';
+      state.extra = state.extra.filter(function (x) { return x.id !== meta.id; });
+      state.game = 'pife'; save(); renderAll(); toast('Jogo ' + meta.label + ' excluído.');
+    } else {
+      b.setAttribute('data-armed', '1'); b.textContent = 'Toque de novo para excluir o jogo e o histórico';
+      delTimer = setTimeout(function () { b.removeAttribute('data-armed'); b.textContent = 'Excluir este jogo'; }, 3500);
+    }
+  });
+
+  $('nameA').value = state.names[0]; $('nameB').value = state.names[1];
+  save();
+  renderAll();
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+}
+</script>
+</body>
+</html>
